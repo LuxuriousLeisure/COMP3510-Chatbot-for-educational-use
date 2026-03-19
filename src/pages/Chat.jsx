@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import MessageBubble from '@/components/chat/MessageBubble';
 import ChatInput from '@/components/chat/ChatInput';
@@ -9,10 +9,14 @@ import TypingIndicator from '@/components/chat/TypingIndicator';
 import WelcomeScreen from '@/components/chat/WelcomeScreen';
 import { CATEGORIES } from '@/components/chat/CategoryTabs';
 
+// Keys of the 4 visible (non-general) categories
+const VISIBLE_CATEGORY_KEYS = ['programming', 'language', 'math', 'science'];
+
 export default function Chat() {
   const [isLoading, setIsLoading] = useState(false);
   const [localMessages, setLocalMessages] = useState([]);
-  const [activeCategory, setActiveCategory] = useState('programming');
+  // null means no tag pre-selected (auto-detect mode)
+  const [activeCategory, setActiveCategory] = useState(null);
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -30,9 +34,10 @@ export default function Chat() {
   useEffect(() => {
     if (conversation) {
       setLocalMessages(conversation.messages || []);
-      if (conversation.subject) setActiveCategory(conversation.subject);
+      setActiveCategory(conversation.subject || null);
     } else if (!conversationId) {
       setLocalMessages([]);
+      setActiveCategory(null);
     }
   }, [conversation, conversationId]);
 
@@ -40,13 +45,13 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [localMessages, isLoading]);
 
-  const getSystemPrompt = () => {
-    const cat = CATEGORIES.find(c => c.key === activeCategory);
-    return cat ? cat.systemPrompt : CATEGORIES[0].systemPrompt;
+  const getSystemPrompt = (key) => {
+    const cat = CATEGORIES.find(c => c.key === key);
+    return cat ? cat.systemPrompt : CATEGORIES.find(c => c.key === 'general').systemPrompt;
   };
 
   const handleCategorySelect = (key) => {
-    setActiveCategory(key);
+    setActiveCategory(prev => prev === key ? null : key);
   };
 
   const sendMessage = async (content) => {
@@ -55,32 +60,68 @@ export default function Chat() {
     setLocalMessages(updatedMessages);
     setIsLoading(true);
 
-    // Build conversation context (last 10 messages for context)
-    const recentMessages = updatedMessages.slice(-10);
-    const contextStr = recentMessages
-      .map(m => `${m.role === 'user' ? 'Student' : 'Tutor'}: ${m.content}`)
-      .join('\n\n');
+    // Step 1: Classify the question into one of the 5 categories
+    const classifyResp = await base44.integrations.Core.InvokeLLM({
+      prompt: `Classify the following student question into exactly one of these categories: programming, language, math, science, general.
+- programming: coding, software, algorithms, data structures, computer science concepts
+- language: learning a language, grammar, vocabulary, translation, writing, linguistics
+- math: mathematics, calculations, geometry, algebra, statistics, calculus
+- science: physics, chemistry, biology, astronomy, earth science, scientific concepts
+- general: anything that doesn't clearly fit the above four
 
-    const response = await base44.integrations.Core.InvokeLLM({
-      prompt: `${getSystemPrompt()}\n\nConversation so far:\n${contextStr}\n\nPlease respond to the student's latest message. Be clear, educational, and engaging. Use markdown formatting for better readability.`,
+Question: "${content}"
+
+Reply with only the single category key, nothing else.`,
     });
 
-    const assistantMsg = { role: 'assistant', content: response, timestamp: new Date().toISOString() };
+    const detectedKey = classifyResp.trim().toLowerCase().replace(/[^a-z]/g, '');
+    const validKeys = ['programming', 'language', 'math', 'science', 'general'];
+    const detectedCategory = validKeys.includes(detectedKey) ? detectedKey : 'general';
+
+    let assistantMsg;
+    let resolvedCategory;
+
+    if (!activeCategory) {
+      // Auto mode: use detected category
+      resolvedCategory = detectedCategory;
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `${getSystemPrompt(resolvedCategory)}\n\nConversation so far:\n${updatedMessages.map(m => `${m.role === 'user' ? 'Student' : 'Tutor'}: ${m.content}`).join('\n\n')}\n\nPlease respond to the student's latest message. Be clear, educational, and engaging. Use markdown formatting for better readability.`,
+      });
+      assistantMsg = { role: 'assistant', content: response, timestamp: new Date().toISOString() };
+    } else {
+      // Tag pre-selected — check if it matches
+      const isMatch = detectedCategory === activeCategory || detectedCategory === 'general';
+      if (isMatch) {
+        resolvedCategory = activeCategory;
+        const response = await base44.integrations.Core.InvokeLLM({
+          prompt: `${getSystemPrompt(resolvedCategory)}\n\nConversation so far:\n${updatedMessages.map(m => `${m.role === 'user' ? 'Student' : 'Tutor'}: ${m.content}`).join('\n\n')}\n\nPlease respond to the student's latest message. Be clear, educational, and engaging. Use markdown formatting for better readability.`,
+        });
+        assistantMsg = { role: 'assistant', content: response, timestamp: new Date().toISOString() };
+      } else {
+        // Mismatch — redirect the user
+        resolvedCategory = activeCategory;
+        const selectedCat = CATEGORIES.find(c => c.key === activeCategory);
+        const detectedCat = CATEGORIES.find(c => c.key === detectedCategory);
+        const detectedLabel = detectedCat ? detectedCat.label : 'General Q&A';
+        const redirectMsg = `I'm not really great at **${selectedCat?.label}** questions for this topic~ 😅\n\nThis looks more like a **${detectedLabel}** question! Please switch to the **${detectedLabel}** tag and ask again~ 🎯`;
+        assistantMsg = { role: 'assistant', content: redirectMsg, timestamp: new Date().toISOString() };
+      }
+    }
+
     const allMessages = [...updatedMessages, assistantMsg];
     setLocalMessages(allMessages);
     setIsLoading(false);
 
     // Save to database
     if (conversationId) {
-      await base44.entities.Conversation.update(conversationId, { messages: allMessages });
+      await base44.entities.Conversation.update(conversationId, { messages: allMessages, subject: resolvedCategory });
     } else {
-      // Create new conversation with auto-generated title
       const titleResponse = await base44.integrations.Core.InvokeLLM({
         prompt: `Generate a short title (max 5 words) for a conversation that starts with: "${content}". Return only the title, nothing else.`,
       });
       const newConv = await base44.entities.Conversation.create({
         title: titleResponse.trim().replace(/^["']|["']$/g, ''),
-        subject: activeCategory,
+        subject: resolvedCategory,
         messages: allMessages,
       });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
@@ -94,8 +135,6 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col h-full">
-
-
       {/* Messages area */}
       {!hasMessages ? (
         <WelcomeScreen
