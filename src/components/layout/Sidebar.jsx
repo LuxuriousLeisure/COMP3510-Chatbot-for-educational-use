@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, MessageSquare, Trash2, GraduationCap, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { CATEGORIES } from '@/components/chat/CategoryTabs';
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from 'framer-motion';
 import SubjectBadge from '@/components/chat/SubjectBadge';
