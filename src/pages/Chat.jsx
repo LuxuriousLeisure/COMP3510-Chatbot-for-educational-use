@@ -62,7 +62,7 @@ export default function Chat() {
       .join('\n\n');
 
     const response = await base44.integrations.Core.InvokeLLM({
-      prompt: `${getSystemPrompt(subject)}\n\nConversation so far:\n${contextStr}\n\nPlease respond to the student's latest message. Be clear, educational, and engaging. Use markdown formatting for better readability.`,
+      prompt: `${getSystemPrompt()}\n\nConversation so far:\n${contextStr}\n\nPlease respond to the student's latest message. Be clear, educational, and engaging. Use markdown formatting for better readability.`,
     });
 
     const assistantMsg = { role: 'assistant', content: response, timestamp: new Date().toISOString() };
