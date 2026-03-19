@@ -94,8 +94,7 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Category tabs always visible at top */}
-      <CategoryTabs activeCategory={activeCategory} onSelect={handleCategorySelect} />
+
 
       {/* Messages area */}
       {!hasMessages ? (

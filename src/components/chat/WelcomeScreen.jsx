@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { GraduationCap } from 'lucide-react';
-import { subjectConfig } from './SubjectBadge';
+import { CATEGORIES } from './CategoryTabs';
 
 const suggestions = [
   "Explain quantum entanglement in simple terms",
@@ -9,7 +9,7 @@ const suggestions = [
   "Analyze the themes in Shakespeare's Hamlet",
 ];
 
-export default function WelcomeScreen({ onSuggestionClick, onSubjectSelect }) {
+export default function WelcomeScreen({ onSuggestionClick, onCategorySelect, activeCategory }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
       <motion.div
@@ -28,20 +28,24 @@ export default function WelcomeScreen({ onSuggestionClick, onSubjectSelect }) {
           Ask me anything — I'm here to help you understand any topic.
         </p>
 
-        {/* Subject pills */}
+        {/* Category pills */}
         <div className="flex flex-wrap justify-center gap-2 mb-8">
-          {Object.entries(subjectConfig).map(([key, config]) => {
-            const Icon = config.icon;
+          {CATEGORIES.map(({ key, label, icon: Icon }) => {
+            const isActive = activeCategory === key;
             return (
               <motion.button
                 key={key}
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.97 }}
-                onClick={() => onSubjectSelect(key)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card border border-border text-sm text-foreground hover:border-primary/40 hover:bg-accent transition-colors"
+                onClick={() => onCategorySelect(key)}
+                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all border ${
+                  isActive
+                    ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                    : 'bg-card text-muted-foreground border-border hover:border-primary/40 hover:text-foreground hover:bg-accent'
+                }`}
               >
-                <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                {config.label}
+                <Icon className="h-3.5 w-3.5" />
+                {label}
               </motion.button>
             );
           })}
