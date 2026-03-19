@@ -30,10 +30,9 @@ export default function Chat() {
   useEffect(() => {
     if (conversation) {
       setLocalMessages(conversation.messages || []);
-      setSubject(conversation.subject || 'general');
+      if (conversation.subject) setActiveCategory(conversation.subject);
     } else if (!conversationId) {
       setLocalMessages([]);
-      setSubject('general');
     }
   }, [conversation, conversationId]);
 
@@ -41,18 +40,13 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [localMessages, isLoading]);
 
-  const getSystemPrompt = (subj) => {
-    const prompts = {
-      general: "You are a helpful educational tutor. Explain concepts clearly with examples.",
-      math: "You are a math tutor. Use step-by-step explanations, formulas, and examples. Use markdown for formatting equations.",
-      science: "You are a science tutor. Explain scientific concepts clearly with real-world examples and analogies.",
-      history: "You are a history tutor. Provide context, dates, and connections between events. Tell engaging stories.",
-      literature: "You are a literature tutor. Analyze texts, themes, characters, and literary devices thoughtfully.",
-      programming: "You are a programming tutor. Explain code concepts with examples. Use code blocks for code. Be practical.",
-      languages: "You are a language learning tutor. Help with grammar, vocabulary, pronunciation tips, and cultural context.",
-      philosophy: "You are a philosophy tutor. Explain ideas clearly, present different viewpoints, and encourage critical thinking.",
-    };
-    return prompts[subj] || prompts.general;
+  const getSystemPrompt = () => {
+    const cat = CATEGORIES.find(c => c.key === activeCategory);
+    return cat ? cat.systemPrompt : CATEGORIES[0].systemPrompt;
+  };
+
+  const handleCategorySelect = (key) => {
+    setActiveCategory(key);
   };
 
   const sendMessage = async (content) => {
