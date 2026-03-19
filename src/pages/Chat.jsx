@@ -7,12 +7,12 @@ import MessageBubble from '@/components/chat/MessageBubble';
 import ChatInput from '@/components/chat/ChatInput';
 import TypingIndicator from '@/components/chat/TypingIndicator';
 import WelcomeScreen from '@/components/chat/WelcomeScreen';
-import SubjectBadge from '@/components/chat/SubjectBadge';
+import CategoryTabs, { CATEGORIES } from '@/components/chat/CategoryTabs';
 
 export default function Chat() {
   const [isLoading, setIsLoading] = useState(false);
   const [localMessages, setLocalMessages] = useState([]);
-  const [subject, setSubject] = useState('general');
+  const [activeCategory, setActiveCategory] = useState('programming');
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
