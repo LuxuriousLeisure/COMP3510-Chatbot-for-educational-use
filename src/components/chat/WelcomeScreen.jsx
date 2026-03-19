@@ -25,7 +25,7 @@ export default function WelcomeScreen({ onSuggestionClick, onCategorySelect, act
           What would you like to learn?
         </h1>
         <p className="text-muted-foreground text-sm mb-8">
-          Ask me anything — I'm here to help you understand any topic.
+          Select a topic tag to guide me, or just ask and I'll figure it out automatically!
         </p>
 
         {/* Category pills */}
