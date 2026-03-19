@@ -50,7 +50,11 @@ export default function Sidebar({ conversations, activeId, onNewChat, onDelete, 
               )}
               onClick={() => navigate(`/Chat?id=${conv.id}`)}
             >
-              <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
+              {(() => {
+                const cat = CATEGORIES.find(c => c.key === conv.subject);
+                const Icon = cat ? cat.icon : MessageSquare;
+                return <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />;
+              })()}
               {!collapsed && (
                 <>
                   <span className="text-sm truncate flex-1">{conv.title || 'New Chat'}</span>
