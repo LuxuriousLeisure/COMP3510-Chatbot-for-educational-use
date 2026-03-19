@@ -7,7 +7,7 @@ import MessageBubble from '@/components/chat/MessageBubble';
 import ChatInput from '@/components/chat/ChatInput';
 import TypingIndicator from '@/components/chat/TypingIndicator';
 import WelcomeScreen from '@/components/chat/WelcomeScreen';
-import CategoryTabs, { CATEGORIES } from '@/components/chat/CategoryTabs';
+import { CATEGORIES } from '@/components/chat/CategoryTabs';
 
 export default function Chat() {
   const [isLoading, setIsLoading] = useState(false);
@@ -100,7 +100,8 @@ export default function Chat() {
       {!hasMessages ? (
         <WelcomeScreen
           onSuggestionClick={sendMessage}
-          onSubjectSelect={handleCategorySelect}
+          onCategorySelect={handleCategorySelect}
+          activeCategory={activeCategory}
         />
       ) : (
         <ScrollArea className="flex-1 px-4 md:px-6">
