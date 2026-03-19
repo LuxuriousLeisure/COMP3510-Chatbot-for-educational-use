@@ -8,6 +8,7 @@ import ChatInput from '@/components/chat/ChatInput';
 import TypingIndicator from '@/components/chat/TypingIndicator';
 import WelcomeScreen from '@/components/chat/WelcomeScreen';
 import CategoryTabs, { CATEGORIES } from '@/components/chat/CategoryTabs';
+// SubjectBadge removed - replaced by CategoryTabs
 
 export default function Chat() {
   const [isLoading, setIsLoading] = useState(false);
