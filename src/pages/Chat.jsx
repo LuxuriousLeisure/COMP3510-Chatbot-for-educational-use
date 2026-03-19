@@ -90,33 +90,18 @@ export default function Chat() {
     queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] });
   };
 
-  const handleSuggestionClick = (text) => {
-    sendMessage(text);
-  };
-
-  const handleSubjectSelect = (subj) => {
-    setSubject(subj);
-  };
-
   const hasMessages = localMessages.length > 0;
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      {hasMessages && (
-        <div className="px-6 py-3 border-b border-border flex items-center gap-3">
-          <h2 className="text-sm font-medium text-foreground truncate">
-            {conversation?.title || 'New Chat'}
-          </h2>
-          <SubjectBadge subject={subject} />
-        </div>
-      )}
+      {/* Category tabs always visible at top */}
+      <CategoryTabs activeCategory={activeCategory} onSelect={handleCategorySelect} />
 
       {/* Messages area */}
       {!hasMessages ? (
         <WelcomeScreen
-          onSuggestionClick={handleSuggestionClick}
-          onSubjectSelect={handleSubjectSelect}
+          onSuggestionClick={sendMessage}
+          onSubjectSelect={handleCategorySelect}
         />
       ) : (
         <ScrollArea className="flex-1 px-4 md:px-6">
