@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Code, Languages, Calculator, FlaskConical } from 'lucide-react';
+import { Code, Languages, Calculator, FlaskConical, MessageCircle } from 'lucide-react';
 
 export const CATEGORIES = [
   {
@@ -25,6 +25,12 @@ export const CATEGORIES = [
     label: 'Science Popularization',
     icon: FlaskConical,
     systemPrompt: "You are a science popularization blogger, explaining knowledge in a popular, interesting, and rigorous way, concise and clear, avoiding obscure jargon.",
+  },
+  {
+    key: 'general',
+    label: 'General Q&A',
+    icon: MessageCircle,
+    systemPrompt: "You are a knowledgeable and friendly tutor. Answer the student's question clearly and helpfully, covering any topic they ask about.",
   },
 ];
 
