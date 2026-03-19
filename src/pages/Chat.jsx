@@ -80,7 +80,7 @@ export default function Chat() {
       });
       const newConv = await base44.entities.Conversation.create({
         title: titleResponse.trim().replace(/^["']|["']$/g, ''),
-        subject,
+        subject: activeCategory,
         messages: allMessages,
       });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
